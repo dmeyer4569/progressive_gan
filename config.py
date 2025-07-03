@@ -6,7 +6,7 @@
 #
 
 
-DATASET = "PATH/TO/DATASET"
+DATASET = "/media/volume/100K/bdd100k_images_100k/bdd100k/images/100k/train"
 
 #
 Z_DIM = 512  # Latent vector size
