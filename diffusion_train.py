@@ -11,10 +11,15 @@ import torchvision.transforms as T
 
 # Setup run directory
 now = datetime.now().strftime("%Y%m%d_%H%M%S")
+
 run_dir = os.path.join("runs", now)
+outputs_dir = os.path.join(run_dir, "outputs")
+downscaled_dir = os.path.join(run_dir, "downscaled")
+epochs_dir = os.path.join(run_dir, "epochs")
 os.makedirs(run_dir, exist_ok=True)
-os.makedirs(os.path.join(run_dir, "outputs"), exist_ok=True)
-os.makedirs(os.path.join(run_dir, "downscaled"), exist_ok=True)
+os.makedirs(outputs_dir, exist_ok=True)
+os.makedirs(downscaled_dir, exist_ok=True)
+os.makedirs(epochs_dir, exist_ok=True)
 
 # Save config
 import shutil
@@ -30,14 +35,20 @@ transform = T.Compose([
     T.ToTensor(),
 ])
 class CustomImageDatasetSmall(CustomImageDataset):
+    def __init__(self, image_dir, max_images=None):
+        super().__init__(image_dir)
+        if max_images is not None:
+            import random
+            random.shuffle(self.image_files)
+            self.image_files = self.image_files[:max_images]
     def __getitem__(self, idx):
         img = super().__getitem__(idx)
         img = T.Resize((IMG_SIZE, IMG_SIZE))(img)
         return img
 
-dataset = CustomImageDatasetSmall(DATASET)
-BATCH_SIZE = 2  # Lower batch size for less VRAM
-dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=2, pin_memory=True)
+# Use only 5000 images, for example:
+dataset = CustomImageDatasetSmall(DATASET, max_images=MAX_IMAGES)
+dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, pin_memory=True)
 
 # Model
 model = UNet2DModel(
@@ -49,7 +60,7 @@ model = UNet2DModel(
 )
 scheduler = DDPMScheduler(num_train_timesteps=1000)
 
-accelerator = Accelerator()
+accelerator = Accelerator(mixed_precision='fp16')
 model, dataloader = accelerator.prepare(model, dataloader)
 optimizer = torch.optim.AdamW(model.parameters(), lr=2e-4)
 
@@ -70,7 +81,7 @@ for epoch in range(num_epochs):
         if step % 100 == 0:
             print(f"Epoch {epoch} Step {step} Loss {loss.item():.4f}")
     # Save model
-    accelerator.save_state(os.path.join(run_dir, f"model_epoch_{epoch}.pt"))
+    accelerator.save_state(os.path.join(epochs_dir, f"model_epoch_{epoch}.pt"))
     # Sample and save images
     model.eval()
     with torch.no_grad():

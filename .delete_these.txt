@@ -1,7 +1,0 @@
-dataloader.py
-datasetloader.py
-networks/
-train_loop.py
-test_gan.py
-optim_and_loss.py
-requirements.txt
