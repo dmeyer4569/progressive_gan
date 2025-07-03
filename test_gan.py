@@ -1,9 +1,10 @@
 import torch
 from networks.generator import Generator
+from config import *
 
 # Set parameters
-z_dim = 512
-batch_size = 4
+z_dim = Z_DIM
+batch_size = BATCH_SIZE
 
 # Instantiate generator
 gen = Generator(z_dim=z_dim)
