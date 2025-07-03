@@ -1,24 +1,27 @@
+
+# Test the full data/optim/loss pipeline
+
 import torch
-from networks.generator import Generator
-from networks.discriminator import Discriminator
-from config import *
+from dataloader import get_dataloader
+from optim_and_loss import gen, disc, optimizer_g, optimizer_d, criterion, device
+from config import Z_DIM
 
-# Set parameters from config
-z_dim = Z_DIM
-batch_size = BATCH_SIZE
+def test_pipeline():
+    dataloader = get_dataloader()
+    batch = next(iter(dataloader))
+    batch = batch.to(device)
+    print("Loaded batch shape:", batch.shape)
 
-# Instantiate generator and discriminator
-gen = Generator(z_dim=z_dim)
-disc = Discriminator()
+    # Forward pass through generator
+    z = torch.randn(batch.shape[0], Z_DIM, device=device)
+    fake_imgs = gen(z)
+    print("Generated fake images shape:", fake_imgs.shape)
 
-# Create random latent vector
-z = torch.randn(batch_size, z_dim)
+    # Forward pass through discriminator
+    real_out = disc(batch)
+    fake_out = disc(fake_imgs)
+    print("Discriminator output (real):", real_out)
+    print("Discriminator output (fake):", fake_out)
 
-# Forward pass through generator (steps=0 for 4x4 output)
-img = gen(z, steps=0)
-
-# Forward pass through discriminator
-output = disc(img)
-
-print("Discriminator output:", output)
-print("Generated image shape:", img.shape)
+if __name__ == "__main__":
+    test_pipeline()
