@@ -1,0 +1,6 @@
+torch
+accelerate
+diffusers
+tqdm
+torchvision
+Pillow
