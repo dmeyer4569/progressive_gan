@@ -1,3 +1,5 @@
+### This is currently in the pretraining phase... Not ready for production environment
+
 # Diffusion Model Training
 
 This project now uses a diffusion model (DDPM) with Hugging Face diffusers.
