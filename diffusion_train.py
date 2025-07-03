@@ -66,8 +66,7 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=2e-4)
 
 # Training loop (simplified, 1 epoch)
 from tqdm import tqdm
-num_epochs = 1
-for epoch in range(num_epochs):
+for epoch in range(EPOCHS):
     for step, real_imgs in enumerate(tqdm(dataloader)):
         real_imgs = real_imgs.to(accelerator.device)
         noise = torch.randn_like(real_imgs)
