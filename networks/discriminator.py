@@ -2,9 +2,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from config import BASE_CHANNELS, IMAGE_CHANNELS
 
 class Discriminator(nn.Module):
-    def __init__(self, base_channels=512, image_channels=3):
+    def __init__(self, base_channels=BASE_CHANNELS, image_channels=IMAGE_CHANNELS):
         super(Discriminator, self).__init__()
         # FromRGB layer for 4x4
         self.from_rgb = nn.Conv2d(image_channels, base_channels, 1)

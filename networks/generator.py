@@ -2,9 +2,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from config import Z_DIM, BASE_CHANNELS, IMAGE_CHANNELS
 
 class Generator(nn.Module):
-    def __init__(self, z_dim=512, base_channels=512, image_channels=3):
+    def __init__(self, z_dim=Z_DIM, base_channels=BASE_CHANNELS, image_channels=IMAGE_CHANNELS):
         super(Generator, self).__init__()
         # Initial 4x4 block
         self.initial_conv = nn.ConvTranspose2d(z_dim, base_channels, 4, 1, 0)
@@ -47,4 +48,3 @@ class Generator(nn.Module):
         self.progressive_blocks.append(block)
         self.to_rgb_layers.append(nn.Conv2d(out_channels, image_channels, 1))
         self.current_resolution *= 2
- 
