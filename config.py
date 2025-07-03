@@ -1,4 +1,10 @@
 # Configuration file for Progressive GAN
+#
+# Make sure to set the paths and parameters according to your setup.
+#
+#
+#
+
 
 DATASET = "PATH/TO/DATASET"
 
@@ -8,4 +14,11 @@ BASE_CHANNELS = 512  # Base number of channels
 IMAGE_CHANNELS = 3  # Number of image channels (e.g., 3 for RGB)
 BATCH_SIZE = 16  # Default batch size
 LEARNING_RATE = 0.0002  # Default learning rate
+
+#IMG H and W
+IMG_W = 1280  # Width of the input images
+IMG_H = 720  # Height of the input images
 # Add more configuration options as needed
+
+# Hardware configuration
+GPU_AMOUNT = 1  # Number of GPUs to use
