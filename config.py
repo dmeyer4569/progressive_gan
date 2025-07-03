@@ -22,7 +22,7 @@ LEARNING_RATE = 0.0002  # Default learning rate
 IMG_SIZE = 256  # Size of the input images (assumed square)
 IMG_W = 1280  # Width of the input images
 IMG_H = 720  # Height of the input images
-MAX_IMAGES = 20000  # Maximum number of images to use from the dataset
+MAX_IMAGES = 2500  # Maximum number of images to use from the dataset
 # Add more configuration options as needed
 
 # Hardware configuration
