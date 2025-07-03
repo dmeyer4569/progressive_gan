@@ -6,7 +6,9 @@ from config import LEARNING_RATE, Z_DIM
 
 # Initialize models
 gen = Generator(z_dim=Z_DIM)
+print("Generator initialized")
 disc = Discriminator()
+print("Discriminator initialized.")
 
 # Optimizers
 optimizer_g = torch.optim.Adam(gen.parameters(), lr=LEARNING_RATE, betas=(0.0, 0.99))

@@ -1,10 +1,12 @@
-
 # Test the full data/optim/loss pipeline
 
 import torch
 from dataloader import get_dataloader
-from optim_and_loss import gen, disc, optimizer_g, optimizer_d, criterion, device
+from optim_and_loss import gen, disc, optimizer_g, optimizer_d, criterion
 from config import Z_DIM
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
 
 def test_pipeline():
     dataloader = get_dataloader()
