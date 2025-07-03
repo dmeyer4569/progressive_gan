@@ -39,7 +39,7 @@ class Discriminator(nn.Module):
                 x = self.progressive_blocks[i](x)
         # Final 4x4 block
         x = self.final_conv(x)
-        return x.view(x.size(0), -1)
+        return x.view(x.size(0), 1)
 
     def add_block(self, in_channels, out_channels, image_channels=3):
         block = nn.Sequential(
