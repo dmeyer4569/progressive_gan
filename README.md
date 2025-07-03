@@ -7,10 +7,18 @@ This project now uses a diffusion model (DDPM) with Hugging Face diffusers.
 ## How to train
 
 1. Set your dataset path in `config.py` (variable `DATASET`).
-2. Run:
+
+2. Setup virtual environment: 
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+3. Run:
 
 ```bash
-python diffusion_train.py
+python3 diffusion_train.py
 ```
 
 Outputs and downscaled images will be saved in the `runs/` folder.
