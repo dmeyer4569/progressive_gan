@@ -7,10 +7,31 @@ from config import Z_DIM
 import torchvision.utils as vutils
 import torchvision.transforms as T
 
+import os
+import shutil
+from datetime import datetime
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
+# Create run directory structure
+def create_run_dirs():
+    now = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_dir = os.path.join("runs", now)
+    outputs_dir = os.path.join(base_dir, "outputs")
+    epochs_dir = os.path.join(base_dir, "epochs")
+    os.makedirs(outputs_dir, exist_ok=True)
+    os.makedirs(epochs_dir, exist_ok=True)
+    # Save config.py
+    shutil.copy("config.py", os.path.join(base_dir, "config.py"))
+    # Create log file
+    log_path = os.path.join(base_dir, "log.txt")
+    with open(log_path, "w") as f:
+        f.write(f"Run started at {now}\n")
+    return base_dir, outputs_dir, epochs_dir, log_path
+
 def test_pipeline():
+    base_dir, outputs_dir, epochs_dir, log_path = create_run_dirs()
     dataloader = get_dataloader()
     batch = next(iter(dataloader))
     batch = batch.to(device)
@@ -32,8 +53,12 @@ def test_pipeline():
     to_pil = T.ToPILImage()
     grid_img = to_pil(grid)
     grid_img = grid_img.resize((256, 256), resample=2)
-    grid_img.save("generated_grid.png")
-    print("Saved generated images grid as generated_grid.png")
+    out_path = os.path.join(outputs_dir, "generated_grid.png")
+    grid_img.save(out_path)
+    print(f"Saved generated images grid as {out_path}")
+    # Log output
+    with open(log_path, "a") as f:
+        f.write(f"Saved generated images grid as {out_path}\n")
 
 if __name__ == "__main__":
     test_pipeline()
