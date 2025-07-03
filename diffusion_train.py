@@ -8,10 +8,10 @@ import os
 from datetime import datetime
 from PIL import Image
 import torchvision.transforms as T
+from torchvision.utils import save_image
 
 # Setup run directory
-now = datetime.now().strftime("%Y%m%d_%H%M%S")
-
+now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 run_dir = os.path.join("runs", now)
 outputs_dir = os.path.join(run_dir, "outputs")
 downscaled_dir = os.path.join(run_dir, "downscaled")
@@ -26,27 +26,26 @@ import shutil
 shutil.copy("config.py", os.path.join(run_dir, "config.py"))
 
 # Data
-
-# Use smaller image size for lower VRAM usage
-IMG_SIZE = IMG_SIZE
 transform = T.Compose([
     T.CenterCrop(IMG_SIZE),
     T.Resize((IMG_SIZE, IMG_SIZE)),
     T.ToTensor(),
 ])
+
 class CustomImageDatasetSmall(CustomImageDataset):
     def __init__(self, image_dir, max_images=None):
+        if not os.path.isdir(image_dir):
+            raise ValueError(f"Image directory {image_dir} not found.")
         super().__init__(image_dir)
         if max_images is not None:
             import random
             random.shuffle(self.image_files)
             self.image_files = self.image_files[:max_images]
-    def __getitem__(self, idx):
-        img = super().__getitem__(idx)
-        img = T.Resize((IMG_SIZE, IMG_SIZE))(img)
-        return img
 
-# Use only 5000 images, for example:
+    def __getitem__(self, idx):
+        return super().__getitem__(idx)
+
+# Use only a limited number of images
 dataset = CustomImageDatasetSmall(DATASET, max_images=MAX_IMAGES)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, pin_memory=True)
 
@@ -56,7 +55,7 @@ model = UNet2DModel(
     in_channels=3,
     out_channels=3,
     layers_per_block=2,
-    block_out_channels=(64, 128, 256, 256),  # Smaller model for less VRAM
+    block_out_channels=(64, 128, 256, 256),
 )
 scheduler = DDPMScheduler(num_train_timesteps=1000)
 
@@ -64,8 +63,10 @@ accelerator = Accelerator(mixed_precision='fp16')
 model, dataloader = accelerator.prepare(model, dataloader)
 optimizer = torch.optim.AdamW(model.parameters(), lr=2e-4)
 
-# Training loop (simplified, 1 epoch)
+# Training loop
 from tqdm import tqdm
+
+model.train()
 for epoch in range(EPOCHS):
     for step, real_imgs in enumerate(tqdm(dataloader)):
         real_imgs = real_imgs.to(accelerator.device)
@@ -79,20 +80,23 @@ for epoch in range(EPOCHS):
         optimizer.zero_grad()
         if step % 100 == 0:
             print(f"Epoch {epoch} Step {step} Loss {loss.item():.4f}")
+
     # Save model
     accelerator.save_state(os.path.join(epochs_dir, f"model_epoch_{epoch}.pt"))
+
     # Sample and save images
     model.eval()
+    scheduler.set_timesteps(scheduler.num_train_timesteps)
     with torch.no_grad():
         sample = torch.randn(4, 3, IMG_SIZE, IMG_SIZE, device=accelerator.device)
         for t in reversed(range(scheduler.num_train_timesteps)):
             timesteps = torch.full((4,), t, device=accelerator.device, dtype=torch.long)
-            with torch.no_grad():
-                noise_pred = model(sample, timesteps).sample
+            noise_pred = model(sample, timesteps).sample
             sample = scheduler.step(noise_pred, t, sample).prev_sample
         sample = (sample.clamp(-1, 1) + 1) / 2
         for i, img_tensor in enumerate(sample):
             img = T.ToPILImage()(img_tensor.cpu())
-            img.save(os.path.join(run_dir, "outputs", f"sample_{epoch}_{i}.png"))
-            img.resize((64, 64), resample=Image.BICUBIC).save(os.path.join(run_dir, "downscaled", f"downscaled_{epoch}_{i}.png"))
+            img.save(os.path.join(outputs_dir, f"sample_{epoch}_{i}.png"))
+            img.resize((64, 64), resample=Image.BICUBIC).save(os.path.join(downscaled_dir, f"downscaled_{epoch}_{i}.png"))
+        save_image(sample, os.path.join(outputs_dir, f"grid_sample_{epoch}.png"), nrow=2, normalize=True)
     model.train()
