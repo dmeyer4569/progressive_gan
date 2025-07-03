@@ -34,7 +34,7 @@ model = UNet2DModel(
     in_channels=3,
     out_channels=3,
     layers_per_block=2,
-    block_out_channels=(128, 128, 256, 256, 512, 512),
+    block_out_channels=(128, 256, 512, 1024),  # Example block out channels
 )
 scheduler = DDPMScheduler(num_train_timesteps=1000)
 
