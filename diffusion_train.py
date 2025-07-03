@@ -55,11 +55,11 @@ model = UNet2DModel(
     in_channels=3,
     out_channels=3,
     layers_per_block=2,
-    block_out_channels=(64, 128, 256, 256),
+    block_out_channels=(128, 256, 512, 1024),
 )
 scheduler = DDPMScheduler(num_train_timesteps=1000)
 
-accelerator = Accelerator(mixed_precision='fp16')
+accelerator = Accelerator(mixed_precision='bf16')
 model, dataloader = accelerator.prepare(model, dataloader)
 optimizer = torch.optim.AdamW(model.parameters(), lr=2e-4)
 

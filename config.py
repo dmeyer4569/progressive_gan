@@ -27,4 +27,4 @@ MAX_IMAGES = 2500  # Maximum number of images to use from the dataset
 
 # Hardware configuration
 GPU_AMOUNT = 1  # Number of GPUs to use
-NUM_WORKERS = 8
+NUM_WORKERS = 16

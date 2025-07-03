@@ -23,13 +23,6 @@ python3 diffusion_train.py
 
 Outputs and downscaled images will be saved in the `runs/` folder.
 
-## Requirements
-- diffusers
-- accelerate
-- torch
-- torchvision
-- PIL
-
 ## Notes
 - The GAN code has been replaced by a minimal DDPM pipeline.
 - You can further customize the U-Net, scheduler, and training loop as needed.
