@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 from datasetloader import CustomImageDataset
-from config import DATASET, BATCH_SIZE
+from config import *
 from diffusers import UNet2DModel, DDPMScheduler
 from accelerate import Accelerator
 import os
@@ -21,20 +21,31 @@ import shutil
 shutil.copy("config.py", os.path.join(run_dir, "config.py"))
 
 # Data
+
+# Use smaller image size for lower VRAM usage
+IMG_SIZE = IMG_SIZE
 transform = T.Compose([
-    T.CenterCrop(512),
+    T.CenterCrop(IMG_SIZE),
+    T.Resize((IMG_SIZE, IMG_SIZE)),
     T.ToTensor(),
 ])
-dataset = CustomImageDataset(DATASET)
-dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, pin_memory=True)
+class CustomImageDatasetSmall(CustomImageDataset):
+    def __getitem__(self, idx):
+        img = super().__getitem__(idx)
+        img = T.Resize((IMG_SIZE, IMG_SIZE))(img)
+        return img
+
+dataset = CustomImageDatasetSmall(DATASET)
+BATCH_SIZE = 2  # Lower batch size for less VRAM
+dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=2, pin_memory=True)
 
 # Model
 model = UNet2DModel(
-    sample_size=512,  # image size
+    sample_size=IMG_SIZE,  # image size
     in_channels=3,
     out_channels=3,
     layers_per_block=2,
-    block_out_channels=(128, 256, 512, 1024),  # Example block out channels
+    block_out_channels=(64, 128, 256, 256),  # Smaller model for less VRAM
 )
 scheduler = DDPMScheduler(num_train_timesteps=1000)
 
@@ -63,7 +74,7 @@ for epoch in range(num_epochs):
     # Sample and save images
     model.eval()
     with torch.no_grad():
-        sample = torch.randn(4, 3, 512, 512, device=accelerator.device)
+        sample = torch.randn(4, 3, IMG_SIZE, IMG_SIZE, device=accelerator.device)
         for t in reversed(range(scheduler.num_train_timesteps)):
             timesteps = torch.full((4,), t, device=accelerator.device, dtype=torch.long)
             with torch.no_grad():
@@ -73,5 +84,5 @@ for epoch in range(num_epochs):
         for i, img_tensor in enumerate(sample):
             img = T.ToPILImage()(img_tensor.cpu())
             img.save(os.path.join(run_dir, "outputs", f"sample_{epoch}_{i}.png"))
-            img.resize((128, 128), resample=Image.BICUBIC).save(os.path.join(run_dir, "downscaled", f"downscaled_{epoch}_{i}.png"))
+            img.resize((64, 64), resample=Image.BICUBIC).save(os.path.join(run_dir, "downscaled", f"downscaled_{epoch}_{i}.png"))
     model.train()

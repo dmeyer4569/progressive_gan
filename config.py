@@ -16,6 +16,7 @@ BATCH_SIZE = 16  # Default batch size
 LEARNING_RATE = 0.0002  # Default learning rate
 
 #IMG H and W
+IMG_SIZE = 256  # Size of the input images (assumed square)
 IMG_W = 1280  # Width of the input images
 IMG_H = 720  # Height of the input images
 # Add more configuration options as needed
