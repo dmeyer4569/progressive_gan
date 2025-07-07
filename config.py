@@ -9,7 +9,7 @@
 DATASET = "/media/volume/100K/bdd100k_images_100k/bdd100k/images/100k/train"
 
 # Amount of epochs
-EPOCHS = 5 # sets the amount of epochs ~ 11hrs/ea
+EPOCHS = 50 # sets the amount of epochs ~ 30min/ea
 
 #
 IMAGE_CHANNELS = 3  # Number of image channels (e.g., 3 for RGB)
