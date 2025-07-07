@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 from datasetloader import CustomImageDataset
 from config import *
-from diffusers import UNet2DModel, DDPMScheduler
+from diffusers import UNet2DModel, DDIMScheduler, EMAModel
 from accelerate import Accelerator
 import os
 from datetime import datetime
@@ -55,13 +55,13 @@ model = UNet2DModel(
     in_channels=3,
     out_channels=3,
     layers_per_block=2,
-    block_out_channels=(128, 256, 512, 1024),
+    block_out_channels=(64, 128, 256, 512),
 )
-scheduler = DDPMScheduler(num_train_timesteps=1000)
+scheduler = DDIMScheduler(num_train_timesteps=250, beta_schedule="squaredcos_cap_v2")
 
 accelerator = Accelerator(mixed_precision='bf16')
 model, dataloader = accelerator.prepare(model, dataloader)
-optimizer = torch.optim.AdamW(model.parameters(), lr=2e-4)
+optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
 
 # Training loop
 from tqdm import tqdm
@@ -77,6 +77,7 @@ for epoch in range(EPOCHS):
         loss = torch.nn.functional.mse_loss(noise_pred, noise)
         accelerator.backward(loss)
         optimizer.step()
+        ema = EMAModel(parameters=model.parameters())
         optimizer.zero_grad()
         if step % 100 == 0:
             print(f"Epoch {epoch} Step {step} Loss {loss.item():.4f}")

@@ -12,14 +12,12 @@ DATASET = "/media/volume/100K/bdd100k_images_100k/bdd100k/images/100k/train"
 EPOCHS = 5 # sets the amount of epochs ~ 11hrs/ea
 
 #
-Z_DIM = 512  # Latent vector size
-BASE_CHANNELS = 512  # Base number of channels
 IMAGE_CHANNELS = 3  # Number of image channels (e.g., 3 for RGB)
 BATCH_SIZE = 8  # Default batch size
 LEARNING_RATE = 0.0002  # Default learning rate
 
 #IMG H and W
-IMG_SIZE = 256  # Size of the input images (assumed square)
+IMG_SIZE = 512  # Size of the input images (assumed square)
 IMG_W = 1280  # Width of the input images
 IMG_H = 720  # Height of the input images
 MAX_IMAGES = 2500  # Maximum number of images to use from the dataset
