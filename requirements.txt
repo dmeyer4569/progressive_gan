@@ -1,6 +1,8 @@
+"""Requirements for Diffusion Model project"""
 torch
 accelerate
 diffusers
 tqdm
 torchvision
 Pillow
+pandas
