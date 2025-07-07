@@ -42,7 +42,7 @@ class CustomImageDatasetSmall(CustomImageDataset):
     def __init__(self, image_dir, max_images=None):
         if not os.path.isdir(image_dir):
             raise ValueError(f"Image directory {image_dir} not found.")
-        super().__init__(image_dir, transform=transform)
+        super().__init__(image_dir)
         if max_images is not None:
             import random
             random.shuffle(self.image_files)
