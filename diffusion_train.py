@@ -129,8 +129,18 @@ for epoch in range(EPOCHS):
         ref_img = real_imgs[0].detach().cpu()
         gen_img = sample[0].detach().cpu()
         ref_img = (ref_img * 0.5 + 0.5).clamp(0, 1)  # denorm
-        psnr = psnr_metric(ref_img.permute(1, 2, 0).numpy(), gen_img.permute(1, 2, 0).numpy(), data_range=1.0)
-        ssim = ssim_metric(ref_img.permute(1, 2, 0).numpy(), gen_img.permute(1, 2, 0).numpy(), multichannel=True, data_range=1.0)
+
+        # Convert to HWC
+        ref_np = ref_img.permute(1, 2, 0).numpy()
+        gen_np = gen_img.permute(1, 2, 0).numpy()
+
+        # Compute PSNR and SSIM
+        psnr = psnr_metric(ref_np, gen_np, data_range=1.0)
+        try:
+            ssim = ssim_metric(ref_np, gen_np, data_range=1.0, channel_axis=-1)
+        except ValueError as e:
+            print(f"[Warning] SSIM computation failed at epoch {epoch}: {e}")
+            ssim = float('nan')
 
         # Log metrics
         pd.DataFrame([[epoch, np.mean(epoch_losses), psnr, ssim]], columns=["epoch", "loss", "psnr", "ssim"]).to_csv(
