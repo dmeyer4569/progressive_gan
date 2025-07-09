@@ -9,11 +9,10 @@ import os
 from datetime import datetime
 from PIL import Image
 import torchvision.transforms as T
-from torchvision.utils import save_image, make_grid
+from torchvision.utils import save_image
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
-import torchvision
 from skimage.metrics import structural_similarity as ssim_metric
 from skimage.metrics import peak_signal_noise_ratio as psnr_metric
 
@@ -71,9 +70,24 @@ ema = EMAModel(parameters=model.parameters(), power=0.75)  # power=0.75 is typic
 loss_log = []
 metrics_csv = os.path.join(run_dir, "metrics.csv")
 
+# ---- Resume from checkpoint ----
+start_epoch = 0
+if CHECKPOINT_PT and os.path.exists(CHECKPOINT_PT):
+    print(f"Loading checkpoint from {CHECKPOINT_PT}")
+    checkpoint = torch.load(CHECKPOINT_PT, map_location=accelerator.device)
+
+    model.load_state_dict(checkpoint["model"])
+    if "optimizer" in checkpoint:
+        optimizer.load_state_dict(checkpoint["optimizer"])
+    if "ema" in checkpoint:
+        ema.load_state_dict(checkpoint["ema"])
+    start_epoch = checkpoint.get("epoch", 0)
+    print(f"Resuming training from epoch {start_epoch}")
+# ---------------------------------
+
 # Training Loop
 model.train()
-for epoch in range(EPOCHS):
+for epoch in range(start_epoch, EPOCHS):
     epoch_losses = []
     for step, real_imgs in enumerate(tqdm(dataloader, desc=f"Epoch {epoch}")):
         real_imgs = real_imgs.to(accelerator.device)
@@ -96,8 +110,14 @@ for epoch in range(EPOCHS):
 
     loss_log.append((epoch, np.mean(epoch_losses)))
 
-    # Save model
-    accelerator.save_state(os.path.join(epochs_dir, f"model_epoch_{epoch}.pt"))
+    # Save model checkpoint
+    checkpoint_path = os.path.join(epochs_dir, f"model_epoch_{epoch}.pt")
+    torch.save({
+        "epoch": epoch + 1,
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+        "ema": ema.state_dict(),
+    }, checkpoint_path)
 
     # Save EMA weights temporarily
     ema.store(model.parameters())
@@ -149,3 +169,4 @@ for epoch in range(EPOCHS):
 
     model.train()
     ema.restore(model.parameters())
+    print(f"Epoch {epoch} completed. Loss: {np.mean(epoch_losses):.4f}, PSNR: {psnr:.4f}, SSIM: {ssim:.4f}")    
