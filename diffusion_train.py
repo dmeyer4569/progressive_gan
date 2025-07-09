@@ -70,20 +70,18 @@ ema = EMAModel(parameters=model.parameters(), power=0.75)  # power=0.75 is typic
 loss_log = []
 metrics_csv = os.path.join(run_dir, "metrics.csv")
 
-# ---- Resume from checkpoint ----
+# ---- Resume from checkpoint (.pt) ----
 start_epoch = 0
+
 if CHECKPOINT_PT and os.path.exists(CHECKPOINT_PT):
     print(f"Loading checkpoint from {CHECKPOINT_PT}")
     checkpoint = torch.load(CHECKPOINT_PT, map_location=accelerator.device)
-
     model.load_state_dict(checkpoint["model"])
-    if "optimizer" in checkpoint:
-        optimizer.load_state_dict(checkpoint["optimizer"])
-    if "ema" in checkpoint:
-        ema.load_state_dict(checkpoint["ema"])
+    optimizer.load_state_dict(checkpoint["optimizer"])
+    ema.load_state_dict(checkpoint["ema"])
     start_epoch = checkpoint.get("epoch", 0)
     print(f"Resuming training from epoch {start_epoch}")
-# ---------------------------------
+# --------------------------------------
 
 # Training Loop
 model.train()
@@ -110,7 +108,7 @@ for epoch in range(start_epoch, EPOCHS):
 
     loss_log.append((epoch, np.mean(epoch_losses)))
 
-    # Save model checkpoint
+    # Save checkpoint
     checkpoint_path = os.path.join(epochs_dir, f"model_epoch_{epoch}.pt")
     torch.save({
         "epoch": epoch + 1,
@@ -119,7 +117,7 @@ for epoch in range(start_epoch, EPOCHS):
         "ema": ema.state_dict(),
     }, checkpoint_path)
 
-    # Save EMA weights temporarily
+    # Save EMA weights temporarily for sampling
     ema.store(model.parameters())
     ema.copy_to(model.parameters())
 
@@ -169,4 +167,3 @@ for epoch in range(start_epoch, EPOCHS):
 
     model.train()
     ema.restore(model.parameters())
-    print(f"Epoch {epoch} completed. Loss: {np.mean(epoch_losses):.4f}, PSNR: {psnr:.4f}, SSIM: {ssim:.4f}")    
